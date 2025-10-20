@@ -47,4 +47,14 @@ class API_AuthController extends Controller
             ],*/
         ],200);
     }
+
+    public function cerrar_sesion(Request $request)
+    {   
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json([
+            'ok' => true,
+            'mensaje' => 'Sesión cerrada correctamente.'
+        ],200);
+    }
 }
