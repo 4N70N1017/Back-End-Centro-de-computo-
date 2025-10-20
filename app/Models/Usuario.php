@@ -3,9 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Notifications\Notifiable;
 
-class Usuario extends Model
+class Usuario extends Authenticatable
 {
+    use HasApiTokens, Notifiable;
+
     protected $table = 'usuarios';
 
     public $timestamps = false;
@@ -29,5 +34,11 @@ class Usuario extends Model
     public function empleado()
     {
         return $this->belongsTo(Empleado::class, 'id_empleado');
+    } 
+
+    //PARA LA AUTENTICACION
+    public function getAuthPassword()
+    {
+        return $this->contrasena;
     }
 }
