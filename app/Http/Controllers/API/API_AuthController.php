@@ -9,7 +9,7 @@ use App\Models\Usuario;
 
 class API_AuthController extends Controller
 {
-    public function iniciar_sesion(Request $request)
+    public function iniciar(Request $request)
     {
         $request->validate([
             'correo' => 'required|email',
@@ -48,7 +48,7 @@ class API_AuthController extends Controller
         ],200);
     }
 
-    public function cerrar_sesion(Request $request)
+    public function cerrar(Request $request)
     {   
         $request->user()->currentAccessToken()->delete();
 

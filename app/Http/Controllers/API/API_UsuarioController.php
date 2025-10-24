@@ -13,7 +13,7 @@ use App\Models\Usuario;
 
 class API_UsuarioController extends Controller
 {
-    public function guardar_usuario(Request $request)
+    public function guardar(Request $request)
     {
         // Validación conjunta de datos del empleado y del usuario
         $validator = Validator::make($request->all(), [
