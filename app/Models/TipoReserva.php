@@ -4,15 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Prioridad extends Model
+class TipoReserva extends Model
 {
-    protected $table = 'prioridad';
+    protected $table = 'tipo_reserva';
 
     public $timestamps = false;
 
     protected $fillable = [
         'nombre',
         'descripcion',
+        'prioridad_id',
         'esta_activo',
     ];
 
@@ -20,9 +21,9 @@ class Prioridad extends Model
         'esta_activo' => 'boolean',
     ];
 
-    //Relaciones
-    public function tiposReserva()
+    // Relaciones
+    public function prioridad()
     {
-        return $this->hasMany(TipoReserva::class, 'prioridad_id');
+        return $this->belongsTo(Prioridad::class, 'prioridad_id');
     }
 }
