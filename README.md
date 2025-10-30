@@ -4,6 +4,11 @@ Codigo Back end del centro de computo en el framework de laravel
 ## Pasos para levantar proyecto localmente
 
 ### 1. Clonar el repositorio
+Desde GitLab
+```bash
+git clone https://gitlab.pero.mx/fic-5-4-2025/equipo-1/controlcentrocomputo-web-y-apis.git
+```
+Desde GitHub
 ```bash
 git clone https://github.com/4N70N1017/Back-End-Centro-de-computo-.git
 ```
