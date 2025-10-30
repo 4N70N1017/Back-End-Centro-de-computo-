@@ -26,4 +26,9 @@ class TipoReserva extends Model
     {
         return $this->belongsTo(Prioridad::class, 'prioridad_id');
     }
+
+    public function peticionesReserva()
+    {
+        return $this->hasMany(PeticionReserva::class, 'tipo_reserva_id');
+    }
 }

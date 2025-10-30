@@ -25,4 +25,9 @@ class Materia extends Model
     {
         return $this->belongsToMany(Usuario::class,'usuario_materia','materia_id','usuario_id');
     }
+
+    public function peticionesReserva()
+    {
+        return $this->hasMany(PeticionReserva::class, 'materia_id');
+    }
 }

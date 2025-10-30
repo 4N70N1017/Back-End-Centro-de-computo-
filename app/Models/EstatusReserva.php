@@ -14,4 +14,8 @@ class EstatusReserva extends Model
         'nombre',
         'esta_activo',
     ];
+    public function peticionesReserva()
+    {
+        return $this->hasMany(PeticionReserva::class, 'estatus_peticiones_reserva_id');
+    }
 }

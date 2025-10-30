@@ -21,4 +21,8 @@ class Horario extends Model
     ];
 
     //Relaciones
+    public function peticionesReserva()
+    {
+        return $this->hasMany(PeticionReserva::class, 'horario_id');
+    }
 }

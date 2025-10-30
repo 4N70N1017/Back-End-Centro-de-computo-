@@ -22,4 +22,8 @@ class Aula extends Model
     ];
 
     //Relaciones
+    public function peticionesReserva()
+    {
+        return $this->hasMany(PeticionReserva::class, 'aula_id');
+    }
 }
