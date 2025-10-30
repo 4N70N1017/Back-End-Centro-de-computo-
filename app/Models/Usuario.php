@@ -36,6 +36,16 @@ class Usuario extends Authenticatable
         return $this->belongsTo(Empleado::class, 'id_empleado');
     } 
 
+    public function materias()
+    {
+        return $this->belongsToMany(Materia::class,'usuario_materia','usuario_id', 'materia_id');
+    }
+
+    public function peticionesReserva()
+    {
+        return $this->hasMany(PeticionReserva::class, 'usuario_id');
+    }
+
     //PARA LA AUTENTICACION
     public function getAuthPassword()
     {
