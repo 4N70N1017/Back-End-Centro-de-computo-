@@ -13,3 +13,4 @@ Route::post('/auth/logout', [API_AuthController::class, 'cerrar'])->middleware('
 Route::post('/usuarios',[API_UsuarioController::class, 'guardar']);
 
 Route::post('/horarios',[API_HorarioController::class, 'guardar']);
+Route::get('/horarios',[API_HorarioController::class, 'listar']);

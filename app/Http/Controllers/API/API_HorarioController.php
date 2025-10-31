@@ -14,9 +14,19 @@ class API_HorarioController extends Controller
         $horario = Horario::create($validated);
 
         return response()->json([
-            'message' => 'Horario creado correctamente',
+            'mensaje' => 'Horario creado correctamente',
             'horario' => $horario
         ], 201);
+    }
+
+    public function listar(){
+        $horarios = Horario::orderBy('hora_inicio', 'asc')->get();
+
+        return response()->json([
+            'mensaje'  => 'Lista de horarios obtenida correctamente',
+            'total'    => $horarios->count(),
+            'horarios' => $horarios,
+        ], 200);
     }
 
     protected function validarRequestGuardar(Request $request)
@@ -52,7 +62,7 @@ class API_HorarioController extends Controller
 
         if ($existe) {
             abort(response()->json([
-                'message' => 'Error de validación',
+                'mensaje' => 'Error de validación',
                 'error' => 'Ya existe un horario con el mismo rango de horas.',
             ], 422));
         }
