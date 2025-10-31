@@ -29,6 +29,22 @@ class API_HorarioController extends Controller
         ], 200);
     }
 
+    public function ver($id)
+    {
+        $horario = Horario::find($id);
+
+        if (!$horario) {
+            return response()->json([
+                'mensaje' => 'Horario no encontrado'
+            ], 404);
+        }
+
+        return response()->json([
+            'mensaje' => 'Horario obtenido correctamente',
+            'horario' => $horario,
+        ], 200);
+    }
+
     protected function validarRequestGuardar(Request $request)
     {   
         /* NOTAS
