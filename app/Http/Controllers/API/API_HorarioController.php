@@ -19,11 +19,31 @@ class API_HorarioController extends Controller
         ], 201);
     }
 
-    public function listar(){
-        $horarios = Horario::orderBy('hora_inicio', 'asc')->get();
+    public function listar(Request $request)
+    {
+        $validated = $this->validarRequestListar($request);
+
+        $query = Horario::query();
+
+        if (!empty($validated['hora_inicio'])) {
+            $query->where('hora_inicio', $validated['hora_inicio']);
+        }
+
+        if (!empty($validated['hora_fin'])) {
+            $query->where('hora_fin', $validated['hora_fin']);
+        }
+
+        if (isset($validated['esta_activo'])) {
+            $query->where('esta_activo', $validated['esta_activo']);
+        }
+
+        $orderBy = $validated['order_by'] ?? 'hora_inicio';
+        $order   = $validated['order'] ?? 'asc';
+
+        $horarios = $query->orderBy($orderBy, $order)->get();
 
         return response()->json([
-            'mensaje'  => 'Lista de horarios obtenida correctamente',
+            'mensaje'  => 'Consulta de horarios realizada correctamente',
             'total'    => $horarios->count(),
             'horarios' => $horarios,
         ], 200);
@@ -162,6 +182,34 @@ class API_HorarioController extends Controller
         }
 
         return $validated;
+    }
+
+    protected function validarRequestListar(Request $request)
+    {
+        /* NOTAS
+            Parámetros disponibles para filtrar
+                - hora_inicio : Formato HH:MM (24 horas)
+                - hora_fin    : Formato HH:MM (24 horas)
+                - esta_activo : 1=Activo, 0=Inactivo
+                - order_by : id, hora_inicio, hora_fin, esta_activo
+                - order    : asc (por defecto), desc
+
+            Todos los filtros son opcionales
+            Los filtros se pueden combinar entre sí
+        */
+        return $request->validate([
+            'hora_inicio' => 'nullable|date_format:H:i',
+            'hora_fin'    => 'nullable|date_format:H:i',
+            'esta_activo' => 'nullable|boolean',
+            'order_by'    => 'nullable|in:id,hora_inicio,hora_fin,esta_activo',
+            'order'       => 'nullable|in:asc,desc',
+        ], [
+            'hora_inicio.date_format' => 'La hora de inicio debe tener el formato HH:MM (24 horas).',
+            'hora_fin.date_format'    => 'La hora de fin debe tener el formato HH:MM (24 horas).',
+            'esta_activo.boolean'     => 'El estado activo debe ser verdadero o falso.',
+            'order_by.in'             => 'Solo se permiten los campos: id, hora_inicio, hora_fin, esta_activo.',
+            'order.in'                => 'El orden debe ser asc o desc.',
+        ]);
     }
 
 }
