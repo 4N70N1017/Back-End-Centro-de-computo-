@@ -66,6 +66,32 @@ class API_HorarioController extends Controller
         ], 200);
     }
 
+    public function eliminar($id)
+    {
+        $horario = Horario::find($id);
+
+        if (!$horario) {
+            return response()->json([
+                'mensaje' => 'Horario no encontrado.',
+            ], 404);
+        }
+
+        if (!$horario->esta_activo) {
+            return response()->json([
+                'mensaje' => 'El horario ya está inactivo.',
+            ], 409);
+        }
+
+        // Desactivar horario
+        $horario->esta_activo = false;
+        $horario->save();
+
+        return response()->json([
+            'mensaje' => 'Horario desactivado correctamente.',
+            'horario' => $horario,
+        ], 200);
+    }
+
     protected function validarRequestGuardar(Request $request)
     {   
         /* NOTAS
