@@ -15,3 +15,4 @@ Route::post('/usuarios',[API_UsuarioController::class, 'guardar']);
 Route::post('/horarios',[API_HorarioController::class, 'guardar']);
 Route::get('/horarios',[API_HorarioController::class, 'listar']);
 Route::get('/horarios/{id}',[API_HorarioController::class, 'ver']);
+Route::put('/horarios/{id}',[API_HorarioController::class, 'actualizar']);

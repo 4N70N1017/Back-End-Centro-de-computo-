@@ -45,6 +45,27 @@ class API_HorarioController extends Controller
         ], 200);
     }
 
+    public function actualizar(Request $request, $id)
+    {
+        $horario = Horario::find($id);
+
+        if (!$horario) {
+            return response()->json([
+                'mensaje' => 'Horario no encontrado'
+            ], 404);
+        }
+
+        $validated = $this->validarRequestActualizar($request, $id);
+
+        // Guardar cambios
+        $horario->update($validated);
+
+        return response()->json([
+            'mensaje' => 'Horario actualizado correctamente',
+            'horario' => $horario,
+        ], 200);
+    }
+
     protected function validarRequestGuardar(Request $request)
     {   
         /* NOTAS
@@ -78,6 +99,37 @@ class API_HorarioController extends Controller
 
         if ($existe) {
             abort(response()->json([
+                'mensaje' => 'Error de validación',
+                'error' => 'Ya existe un horario con el mismo rango de horas.',
+            ], 422));
+        }
+
+        return $validated;
+    }
+
+    protected function validarRequestActualizar(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'hora_inicio' => 'required|date_format:H:i',
+            'hora_fin'    => 'required|date_format:H:i|after:hora_inicio',
+            'esta_activo' => 'boolean',
+        ], [
+            'hora_inicio.required'    => 'La hora de inicio es obligatoria.',
+            'hora_inicio.date_format' => 'La hora de inicio debe tener el formato HH:MM (24 horas).',
+            'hora_fin.required'       => 'La hora de fin es obligatoria.',
+            'hora_fin.date_format'    => 'La hora de fin debe tener el formato HH:MM (24 horas).',
+            'hora_fin.after'          => 'La hora de fin debe ser posterior a la hora de inicio.',
+            'esta_activo.boolean'     => 'El estado activo debe ser verdadero o falso.',
+        ]);
+
+        // Validar duplicado EXCLUYENDO el mismo ID
+        $existe = Horario::where('hora_inicio', $validated['hora_inicio'])
+            ->where('hora_fin', $validated['hora_fin'])
+            ->where('id', '!=', $id)
+            ->exists();
+
+        if ($existe) {
+            abort(response()->json([    
                 'mensaje' => 'Error de validación',
                 'error' => 'Ya existe un horario con el mismo rango de horas.',
             ], 422));
