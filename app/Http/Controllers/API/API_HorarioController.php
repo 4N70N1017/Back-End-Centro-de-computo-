@@ -1,0 +1,215 @@
+<?php
+
+namespace App\Http\Controllers\API;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\Horario;
+
+class API_HorarioController extends Controller
+{       
+    public function guardar(Request $request)
+    {
+        $validated = $this->validarRequestGuardar($request);
+        $horario = Horario::create($validated);
+
+        return response()->json([
+            'mensaje' => 'Horario creado correctamente',
+            'horario' => $horario
+        ], 201);
+    }
+
+    public function listar(Request $request)
+    {
+        $validated = $this->validarRequestListar($request);
+
+        $query = Horario::query();
+
+        if (!empty($validated['hora_inicio'])) {
+            $query->where('hora_inicio', $validated['hora_inicio']);
+        }
+
+        if (!empty($validated['hora_fin'])) {
+            $query->where('hora_fin', $validated['hora_fin']);
+        }
+
+        if (isset($validated['esta_activo'])) {
+            $query->where('esta_activo', $validated['esta_activo']);
+        }
+
+        $orderBy = $validated['order_by'] ?? 'hora_inicio';
+        $order   = $validated['order'] ?? 'asc';
+
+        $horarios = $query->orderBy($orderBy, $order)->get();
+
+        return response()->json([
+            'mensaje'  => 'Consulta de horarios realizada correctamente',
+            'total'    => $horarios->count(),
+            'horarios' => $horarios,
+        ], 200);
+    }
+
+    public function ver($id)
+    {
+        $horario = Horario::find($id);
+
+        if (!$horario) {
+            return response()->json([
+                'mensaje' => 'Horario no encontrado'
+            ], 404);
+        }
+
+        return response()->json([
+            'mensaje' => 'Horario obtenido correctamente',
+            'horario' => $horario,
+        ], 200);
+    }
+
+    public function actualizar(Request $request, $id)
+    {
+        $horario = Horario::find($id);
+
+        if (!$horario) {
+            return response()->json([
+                'mensaje' => 'Horario no encontrado'
+            ], 404);
+        }
+
+        $validated = $this->validarRequestActualizar($request, $id);
+
+        // Guardar cambios
+        $horario->update($validated);
+
+        return response()->json([
+            'mensaje' => 'Horario actualizado correctamente',
+            'horario' => $horario,
+        ], 200);
+    }
+
+    public function eliminar($id)
+    {
+        $horario = Horario::find($id);
+
+        if (!$horario) {
+            return response()->json([
+                'mensaje' => 'Horario no encontrado.',
+            ], 404);
+        }
+
+        if (!$horario->esta_activo) {
+            return response()->json([
+                'mensaje' => 'El horario ya está inactivo.',
+            ], 409);
+        }
+
+        // Desactivar horario
+        $horario->esta_activo = false;
+        $horario->save();
+
+        return response()->json([
+            'mensaje' => 'Horario desactivado correctamente.',
+            'horario' => $horario,
+        ], 200);
+    }
+
+    protected function validarRequestGuardar(Request $request)
+    {   
+        /* NOTAS
+            - No se puede registrar un horario que ya existe
+
+            - Se permite el solapamiento de horarios es decir:
+                    Ejemplo, si existe el horario 12:00 a 13:00
+                Es valido el horario 12:30 a 13:30
+
+            - El horario es 24 hrs, ejemplo:
+                00:00, ...,  12:00, 13:00, ..., 23:59
+        */
+
+        $validated = $request->validate([
+            'hora_inicio' => 'required|date_format:H:i',
+            'hora_fin'    => 'required|date_format:H:i|after:hora_inicio',
+            'esta_activo' => 'boolean',
+        ], [ //Traducciones a español
+            'hora_inicio.required'    => 'La hora de inicio es obligatoria.',
+            'hora_inicio.date_format' => 'La hora de inicio debe tener el formato HH:MM (24 horas).',
+            'hora_fin.required'       => 'La hora de fin es obligatoria.',
+            'hora_fin.date_format'    => 'La hora de fin debe tener el formato HH:MM (24 horas).',
+            'hora_fin.after'          => 'La hora de fin debe ser posterior a la hora de inicio.',
+            'esta_activo.boolean'     => 'El estado activo debe ser verdadero o falso.',
+        ]);
+
+        // Validar duplicado
+        $existe = Horario::where('hora_inicio', $validated['hora_inicio'])
+                ->where('hora_fin', $validated['hora_fin'])
+                ->exists();
+
+        if ($existe) {
+            abort(response()->json([
+                'mensaje' => 'Error de validación',
+                'error' => 'Ya existe un horario con el mismo rango de horas.',
+            ], 422));
+        }
+
+        return $validated;
+    }
+
+    protected function validarRequestActualizar(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'hora_inicio' => 'required|date_format:H:i',
+            'hora_fin'    => 'required|date_format:H:i|after:hora_inicio',
+            'esta_activo' => 'boolean',
+        ], [
+            'hora_inicio.required'    => 'La hora de inicio es obligatoria.',
+            'hora_inicio.date_format' => 'La hora de inicio debe tener el formato HH:MM (24 horas).',
+            'hora_fin.required'       => 'La hora de fin es obligatoria.',
+            'hora_fin.date_format'    => 'La hora de fin debe tener el formato HH:MM (24 horas).',
+            'hora_fin.after'          => 'La hora de fin debe ser posterior a la hora de inicio.',
+            'esta_activo.boolean'     => 'El estado activo debe ser verdadero o falso.',
+        ]);
+
+        // Validar duplicado EXCLUYENDO el mismo ID
+        $existe = Horario::where('hora_inicio', $validated['hora_inicio'])
+            ->where('hora_fin', $validated['hora_fin'])
+            ->where('id', '!=', $id)
+            ->exists();
+
+        if ($existe) {
+            abort(response()->json([    
+                'mensaje' => 'Error de validación',
+                'error' => 'Ya existe un horario con el mismo rango de horas.',
+            ], 422));
+        }
+
+        return $validated;
+    }
+
+    protected function validarRequestListar(Request $request)
+    {
+        /* NOTAS
+            Parámetros disponibles para filtrar
+                - hora_inicio : Formato HH:MM (24 horas)
+                - hora_fin    : Formato HH:MM (24 horas)
+                - esta_activo : 1=Activo, 0=Inactivo
+                - order_by : id, hora_inicio, hora_fin, esta_activo
+                - order    : asc (por defecto), desc
+
+            Todos los filtros son opcionales
+            Los filtros se pueden combinar entre sí
+        */
+        return $request->validate([
+            'hora_inicio' => 'nullable|date_format:H:i',
+            'hora_fin'    => 'nullable|date_format:H:i',
+            'esta_activo' => 'nullable|boolean',
+            'order_by'    => 'nullable|in:id,hora_inicio,hora_fin,esta_activo',
+            'order'       => 'nullable|in:asc,desc',
+        ], [
+            'hora_inicio.date_format' => 'La hora de inicio debe tener el formato HH:MM (24 horas).',
+            'hora_fin.date_format'    => 'La hora de fin debe tener el formato HH:MM (24 horas).',
+            'esta_activo.boolean'     => 'El estado activo debe ser verdadero o falso.',
+            'order_by.in'             => 'Solo se permiten los campos: id, hora_inicio, hora_fin, esta_activo.',
+            'order.in'                => 'El orden debe ser asc o desc.',
+        ]);
+    }
+
+}
